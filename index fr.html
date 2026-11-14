@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>L'intégrité n'est pas la complétude : une démo de journal</title>
+<meta name="description" content="Un journal peut réussir un contrôle d'altération et pourtant manquer d'entrées. Choisissez un scénario et voyez quelles preuves supplémentaires comblent l'écart. Jouet pédagogique de StS Forensics Ltd.">
+<link rel="canonical" href="https://stsforensics.github.io/completeness-demo/fr/">
+<link rel="alternate" hreflang="en" href="https://stsforensics.github.io/completeness-demo/">
+<link rel="alternate" hreflang="fr" href="https://stsforensics.github.io/completeness-demo/fr/">
+<link rel="alternate" hreflang="de" href="https://stsforensics.github.io/completeness-demo/de/">
+<link rel="alternate" hreflang="es" href="https://stsforensics.github.io/completeness-demo/es/">
+<link rel="alternate" hreflang="ja" href="https://stsforensics.github.io/completeness-demo/ja/">
+<link rel="alternate" hreflang="zh-HK" href="https://stsforensics.github.io/completeness-demo/zh-hk/">
+<link rel="alternate" hreflang="zh-TW" href="https://stsforensics.github.io/completeness-demo/zh-tw/">
+<link rel="alternate" hreflang="zh-CN" href="https://stsforensics.github.io/completeness-demo/zh-cn/">
+<link rel="alternate" hreflang="x-default" href="https://stsforensics.github.io/completeness-demo/">
+<style>
+:root{--bg:#fff;--fg:#1a1a1a;--mut:#595959;--ok:#146c2e;--bad:#b3261e;--unk:#8a5a00;--card:#f5f5f5;--link:#0b57d0}
+@media(prefers-color-scheme:dark){:root{--bg:#121212;--fg:#eee;--mut:#b0b0b0;--ok:#6fd08c;--bad:#ff8a80;--unk:#f2c46d;--card:#1e1e1e;--link:#8ab4f8}}
+body{font:16px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--fg);max-width:760px;margin:0 auto;padding:16px}
+h1{font-size:1.3rem;margin-bottom:4px}h2{font-size:1.05rem;margin:18px 0 6px}
+a{color:var(--link)}
+select,button{font:inherit;padding:6px 10px;margin:4px 0;max-width:100%}
+table{border-collapse:collapse;width:100%;margin:8px 0}caption{text-align:left;color:var(--mut);font-size:.85rem;padding:2px 0}
+td,th{border-bottom:1px solid #8884;padding:4px 6px;text-align:left;font-size:.85rem;word-break:break-all}
+.card{background:var(--card);padding:10px 12px;border-radius:8px;margin:10px 0}
+.PASS{color:var(--ok);font-weight:700}.FAIL{color:var(--bad);font-weight:700}.HOLD{color:var(--unk);font-weight:700}
+small,.mut{color:var(--mut)}
+.back{font-size:.9rem;margin:0 0 6px}.bar,.note{font-size:.85rem;margin:0 0 6px}
+.pre p,.leg p{margin:6px 0}.pre b{white-space:nowrap}
+.story{margin:6px 0 2px}
+</style></head><body>
+<p class="bar"><a href="https://stsforensics.github.io/completeness-demo/" hreflang="en" lang="en">English</a> · <a href="https://stsforensics.github.io/completeness-demo/de/" hreflang="de" lang="de">Deutsch</a> · <a href="https://stsforensics.github.io/completeness-demo/es/" hreflang="es" lang="es">Español</a> · <a href="https://stsforensics.github.io/completeness-demo/ja/" hreflang="ja" lang="ja">日本語</a> · <a href="https://stsforensics.github.io/completeness-demo/zh-hk/" hreflang="zh-HK" lang="zh-HK">繁體中文（香港）</a> · <a href="https://stsforensics.github.io/completeness-demo/zh-tw/" hreflang="zh-TW" lang="zh-TW">繁體中文（台灣）</a> · <a href="https://stsforensics.github.io/completeness-demo/zh-cn/" hreflang="zh-CN" lang="zh-CN">简体中文</a></p>
+<p class="note">Traduction automatique, non relue par un locuteur natif. L'anglais fait foi.</p>
+<p class="back"><a href="https://stsforensics.github.io/VerZan/fr/">Retour à VerZan Check</a>, l'outil gratuit d'empreinte de fichier de StS Forensics Ltd</p>
+<h1>L'intégrité n'est pas la complétude</h1>
+<p>Intégrité : rien dans les enregistrements qui m'ont été remis n'a été modifié. Complétude : rien de ce qui devrait s'y trouver ne manque, pour le périmètre que l'opérateur a déclaré. Choisissez un scénario. Jouet pédagogique, ni un produit, ni une preuve, ni un conseil. CC BY 4.0, StS Forensics Ltd, v3, 14 novembre 2026, ébauche soumise à discussion.</p>
+
+<section class="pre" aria-labelledby="whatis">
+<h2 id="whatis">Ce que c'est, selon votre rôle</h2>
+<p><b>Tout le monde :</b> Un journal intime peut n'avoir aucune page modifiée et pourtant manquer la page qui compte. Cette démo montre un journal qui réussit un contrôle d'altération alors que des entrées manquent, et les preuves supplémentaires qui permettent de le voir.</p>
+<p><b>Dirigeants et responsables des risques :</b> Un rapport d'intégrité sans anomalie dit que les enregistrements qui vous ont été remis sont inchangés. Il ne dit rien sur le fait qu'ils soient tous là. Demandez qui détient un décompte indépendant des entrées, et quel système extérieur (prestataire de paiement, audit de stockage) peut être rapproché du journal.</p>
+<p><b>Assureurs, réassureurs et normes de données d'assurance :</b> Pensez à une liste de sinistres ou à un bordereau dont les totaux tombent juste mais qui omet un sinistre. La cohérence interne est un contrôle d'hygiène. La couverture exige un périmètre déclaré et un rapprochement avec un enregistrement que son auteur ne contrôle pas.</p>
+<p><b>Ingénieurs IA et ML :</b> Chaque entrée hache le hachage précédent plus son propre contenu. Le contrôle d'intégrité (chaque entrée correspond à sa propre empreinte) détecte les modifications. Le contrôle de trous (numéros et liens ininterrompus) détecte une suppression au milieu. N'importe qui peut recalculer une chaîne : une fin coupée ou un journal entièrement reconstruit passe donc la vérification, sauf si un tiers détient un point de contrôle (nombre d'entrées et hachage de tête). Une action d'agent qui n'a jamais écrit de ligne de journal n'apparaît que face à un système que l'agent ne contrôle pas.</p>
+<p><b>IETF et normalisation :</b> Le jouet n'a ni signatures, ni arbre de Merkle, ni horodatage. Le point de contrôle tient lieu de tête d'arbre signée. Les vrais journaux ajoutent des têtes signées et des preuves de cohérence pour qu'un témoin puisse vérifier qu'un journal n'a fait que croître (<a href="https://www.rfc-editor.org/rfc/rfc9162">RFC 9162</a>, Certificate Transparency 2.0). <a href="https://www.rfc-editor.org/rfc/rfc9943">RFC 9943</a> (SCITT) fournit des reçus attestant qu'une déclaration a été enregistrée. Savoir si toutes les actions pertinentes ont été soumises reste une question de périmètre que chaque déploiement doit trancher. Les <a href="https://doi.org/10.5281/zenodo.23857888">O4M Record Tests</a> en projet (C1 à C23, commentaires ouverts jusqu'au 1er décembre 2026) portent sur cette question d'omission et sont conçus pour se placer à côté de formats tels que SCITT.</p>
+<p class="mut">Où cela se situe : <a href="https://stsforensics.github.io/VerZan/fr/">VerZan Check</a> demande « ce fichier est-il exactement celui qui a été enregistré ? ». Cette page pose la question suivante : manque-t-il quelque chose dans l'enregistrement ?</p>
+</section>
+
+<section class="leg" aria-labelledby="legend">
+<h2 id="legend">Comment lire les résultats</h2>
+<p>Intégrité : chaque entrée est-elle encore exactement telle qu'elle a été empreinte ?</p>
+<p>Complétude, trois tests dans l'ordre : (a) aucun trou dans le journal, (b) le journal concorde avec un point de contrôle de témoin (nombre d'entrées et hachage de tête), (c) le journal concorde avec les enregistrements détenus par des tiers.</p>
+<p>L'intégrité affiche PASS ou FAIL. La complétude affiche FAIL, HOLD (les éléments fournis ne permettent pas de trancher) ou AUCUN TROU TROUVÉ. C'est le mieux qu'elle puisse dire, et cela ne prouve jamais que rien ne manque.</p>
+</section>
+
+<h2>Essayez</h2>
+<label>Scénario <select id="sc"></select></label>
+<div id="out" aria-live="polite"></div>
+
+<section aria-labelledby="lim">
+<h2 id="lim">Limites de ce jouet</h2>
+<p class="mut">Un seul rédacteur, un seul témoin, aucune signature. Le témoin est supposé honnête et indépendant de l'opérateur ; si l'opérateur contrôle le point de contrôle, il peut aussi le réécrire. La complétude est toujours relative à un périmètre déclaré par l'opérateur. AUCUN TROU TROUVÉ signifie que les trois tests concordent. Cela ne signifie pas que rien ne manque. Les enregistrements extérieurs sont comparés par texte exact, et seulement pour les actions que cette partie extérieure peut voir.</p>
+</section>
+<p><small><a href="https://stsforensics.github.io/VerZan/fr/">Retour à VerZan Check</a>. Tout s'exécute dans votre navigateur et rien ne quitte cette page. Licence CC BY 4.0, StS Forensics Ltd. Jouet pédagogique, ébauche soumise à discussion.</small></p>
+<noscript><p>Cette démo a besoin de JavaScript pour calculer les empreintes dans votre navigateur. Rien ne quitte la page.</p></noscript>
+
+<script>
+const T={"errCrypto": "Cette démo a besoin d'une page sécurisée (https) avec Web Crypto. Ouvrez-la en https dans un navigateur récent.", "errStart": "Désolé, la démo n'a pas pu démarrer : ", "intLabel": "Intégrité", "compLabel": "Complétude", "nogap": "AUCUN TROU TROUVÉ", "colon": " : ", "stop": ".", "tSeq": "n°", "tAction": "action", "tHash": "empreinte (12 premiers car.)", "tCaption": "Journal tel que présenté au vérificateur", "witLabel": "Témoin (pas l'opérateur)", "witFmt": "nombre {count}, tête {head}", "none": "aucun", "outLabel": "Enregistrements extérieurs", "sep": " ; ", "intPass": "chaque entrée correspond encore à sa propre empreinte (un journal reconstruit passe aussi ce test)", "intFail": "l'entrée {n} a été modifiée", "seqFail": "la numérotation saute à la position {pos} (trouvé {found}) : une entrée manque", "chainFail": "l'entrée {seq} ne pointe pas vers la précédente", "noWitness": "pas de point de contrôle de témoin : impossible de dire si la fin a été coupée ou la chaîne reconstruite", "shortLog": "le journal compte {len} entrées, le témoin en a vu {count}", "witnessDiff": "l'historique jusqu'à l'entrée {count} diffère du point de contrôle du témoin (réécrit ou chaîne reconstruite)", "noOutside": "pas d'enregistrements extérieurs : rapprochement impossible", "outMissing": "la partie extérieure a enregistré {list} mais le journal n'a pas d'entrée correspondante", "ok": "aucun trou dans le journal, et concordance avec le point de contrôle du témoin et les enregistrements extérieurs. Tout ce qu'aucun d'eux n'a vu resterait invisible", "src1": "prestataire de paiement et passerelle de messagerie", "src2": "prestataire de paiement, passerelle de messagerie et audit de stockage", "scen": [{"n": "1 Journal intact", "s": "Rien n'a été touché. Un témoin détient le nombre d'entrées et le hachage de tête, et le prestataire de paiement et la passerelle de messagerie ont leurs propres enregistrements."}, {"n": "2 Une entrée modifiée", "s": "Quelqu'un change le remboursement de 120.00 à 12.00 mais laisse l'ancienne empreinte. Le contrôle d'intégrité le détecte. L'enregistrement du prestataire de paiement est lui aussi en désaccord."}, {"n": "2b Entrée modifiée, chaîne reconstruite, sans témoin", "s": "La même modification, mais toutes les empreintes sont recalculées. L'intégrité passe et rien d'indépendant n'existe pour la contredire."}, {"n": "2c Entrée modifiée, chaîne reconstruite, le témoin a gardé son point de contrôle", "s": "Même journal reconstruit, mais un tiers a gardé le hachage de tête. La chaîne reconstruite ne peut pas y correspondre."}, {"n": "3 Entrée du milieu supprimée", "s": "L'entrée du courriel est retirée. Toutes les entrées restantes sont inchangées, donc l'intégrité passe, mais la numérotation a un trou."}, {"n": "3b Entrée du milieu supprimée, chaîne reconstruite, le témoin a gardé le nombre", "s": "La suppression est masquée par une renumérotation et un nouveau hachage. Les deux contrôles internes passent. Le nombre d'entrées du témoin la révèle."}, {"n": "4 Fin du journal coupée, sans témoin", "s": "Les deux dernières entrées sont supprimées. Ce qui reste est une chaîne valide, donc les deux contrôles internes passent. Sans témoin, le trou est invisible."}, {"n": "4b Fin du journal coupée, le témoin a gardé le nombre", "s": "Même coupure. Le témoin avait vu six entrées et n'en voit plus que quatre."}, {"n": "5 Action jamais journalisée, sans contrôle extérieur", "s": "La suppression du fichier n'a jamais été écrite dans le journal. Tout ce qui s'y trouve est intact."}, {"n": "5b Action jamais journalisée, témoin seul", "s": "Le témoin concorde avec le journal parce qu'il ne compte que ce que le journal contient. L'action non journalisée reste invisible."}, {"n": "5c Action jamais journalisée, un enregistrement extérieur la contient", "s": "Un audit de stockage a enregistré la suppression. Le rapprochement du journal avec cet audit révèle l'omission."}, {"n": "6 Le journal a grandi après le point de contrôle (normal)", "s": "Une nouvelle entrée a été ajoutée après le point de contrôle du témoin. Les six premières entrées y correspondent toujours, la croissance est donc acceptée."}]};
+const f=(s,o)=>s.replace(/\{(\w+)\}/g,(m,k)=>o[k]);
+const enc=new TextEncoder();
+async function H(s){const b=await crypto.subtle.digest("SHA-256",enc.encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
+const Z="0".repeat(64);
+const TRUTH=["open_ticket 41","read_customer 17","send_refund 120.00","email_customer 17","delete_file tmp.csv","close_ticket 41"];
+const OUT=["send_refund 120.00","email_customer 17"];
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+async function build(b){const log=[];let p=Z;for(let i=0;i<b.length;i++){const h=await H(`${p}|${i+1}|${b[i]}`);log.push({seq:i+1,body:b[i],prev:p,hash:h});p=h}return log}
+async function integrity(log){for(const e of log){if(await H(`${e.prev}|${e.seq}|${e.body}`)!==e.hash)return["FAIL",f(T.intFail,{n:e.seq})]}return["PASS",T.intPass]}
+function cp(l){return{count:l.length,head:l.length?l[l.length-1].hash:Z}}
+function completeness(log,w,o){let ok=true;const n=[];let p=Z;
+ for(let i=0;i<log.length;i++){const e=log[i];
+  if(e.seq!==i+1)return["FAIL",f(T.seqFail,{pos:i+1,found:e.seq})];
+  if(e.prev!==p)return["FAIL",f(T.chainFail,{seq:e.seq})];
+  p=e.hash}
+ if(!w){n.push(T.noWitness);ok=null}
+ else{
+  if(log.length<w.count)return["FAIL",f(T.shortLog,{len:log.length,count:w.count})];
+  const at=w.count===0?Z:log[w.count-1].hash;
+  if(at!==w.head)return["FAIL",f(T.witnessDiff,{count:w.count})]}
+ if(!o){n.push(T.noOutside);if(ok===true)ok=null}
+ else{const bs=log.map(e=>e.body),m=o.filter(r=>!bs.includes(r));if(m.length)return["FAIL",f(T.outMissing,{list:m.join(", ")})]}
+ return[ok===true?"PASS":"HOLD",n.length?n.join(T.sep):T.ok]}
+async function scenarios(){
+ const clean=await build(TRUTH),w=cp(clean),S=[];
+ const clone=x=>JSON.parse(JSON.stringify(x));
+ let k=0;
+ const add=(log,wit,out,src)=>{const t=T.scen[k++];S.push({name:t.n,story:t.s,log,w:wit,o:out,src})};
+ add(clean,w,OUT,T.src1);
+ const alt=clone(clean);alt[2].body="send_refund 12.00";
+ add(alt,w,OUT,T.src1);
+ const altR=await build(TRUTH.map(x=>x==="send_refund 120.00"?"send_refund 12.00":x));
+ add(altR,null,null,"");
+ add(altR,w,OUT,T.src1);
+ const del=clone(clean);del.splice(3,1);
+ add(del,w,OUT,T.src1);
+ const delR=await build(TRUTH.filter(x=>x!=="email_customer 17"));
+ add(delR,w,OUT,T.src1);
+ const tr=clean.slice(0,4);
+ add(tr,null,null,"");
+ add(tr,w,OUT,T.src1);
+ const om=await build(TRUTH.filter(x=>x!=="delete_file tmp.csv"));
+ add(om,null,null,"");
+ add(om,cp(om),null,"");
+ add(om,cp(om),[...OUT,"delete_file tmp.csv"],T.src2);
+ const grown=await build([...TRUTH,"open_ticket 42"]);
+ add(grown,w,OUT,T.src1);
+ return S}
+function view(s,i,c){
+ const label=c[0]==="PASS"?T.nogap:c[0];
+ return `<div class="card"><div class="story">${esc(s.story)}</div>
+  <div>${esc(T.intLabel)}${T.colon}<span class="${i[0]}">${i[0]}</span> <small>${esc(i[1])}</small></div>
+  <div>${esc(T.compLabel)}${T.colon}<span class="${c[0]}">${esc(label)}</span> <small>${esc(c[1])}</small></div></div>
+  <table><caption>${esc(T.tCaption)}</caption><tr><th>${esc(T.tSeq)}</th><th>${esc(T.tAction)}</th><th>${esc(T.tHash)}</th></tr>${s.log.map(e=>`<tr><td>${esc(e.seq)}</td><td>${esc(e.body)}</td><td>${esc(e.hash.slice(0,12))}</td></tr>`).join("")}</table>
+  <small>${esc(T.witLabel)}${T.colon}${s.w?esc(f(T.witFmt,{count:s.w.count,head:s.w.head.slice(0,12)})):esc(T.none)}${T.stop} ${esc(T.outLabel)}${s.src?` (${esc(s.src)})`:""}${T.colon}${s.o?esc(s.o.join("; ")):esc(T.none)}${T.stop}</small>`}
+if(typeof document!=="undefined")(async()=>{
+ const out=document.getElementById("out");
+ if(!(window.crypto&&crypto.subtle)){out.textContent=T.errCrypto;return}
+ try{
+  const S=await scenarios(),sel=document.getElementById("sc");
+  S.forEach((s,i)=>{const o=document.createElement("option");o.value=i;o.textContent=s.name;sel.appendChild(o)});
+  async function show(){const s=S[sel.value],i=await integrity(s.log),c=completeness(s.log,s.w,s.o);out.innerHTML=view(s,i,c)}
+  sel.onchange=show;await show()
+ }catch(e){out.textContent=T.errStart+e.message}
+})();
+</script></body></html>

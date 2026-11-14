@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>没有改动，不等于没有遗漏：日志演示</title>
+<meta name="description" content="日志可以通过防篡改检查，却仍然缺少记录。选择一个场景，看看哪些额外证据可以补上缺口。StS Forensics Ltd 的教学演示。">
+<link rel="canonical" href="https://stsforensics.github.io/completeness-demo/zh-cn/">
+<link rel="alternate" hreflang="en" href="https://stsforensics.github.io/completeness-demo/">
+<link rel="alternate" hreflang="fr" href="https://stsforensics.github.io/completeness-demo/fr/">
+<link rel="alternate" hreflang="de" href="https://stsforensics.github.io/completeness-demo/de/">
+<link rel="alternate" hreflang="es" href="https://stsforensics.github.io/completeness-demo/es/">
+<link rel="alternate" hreflang="ja" href="https://stsforensics.github.io/completeness-demo/ja/">
+<link rel="alternate" hreflang="zh-HK" href="https://stsforensics.github.io/completeness-demo/zh-hk/">
+<link rel="alternate" hreflang="zh-TW" href="https://stsforensics.github.io/completeness-demo/zh-tw/">
+<link rel="alternate" hreflang="zh-CN" href="https://stsforensics.github.io/completeness-demo/zh-cn/">
+<link rel="alternate" hreflang="x-default" href="https://stsforensics.github.io/completeness-demo/">
+<style>
+:root{--bg:#fff;--fg:#1a1a1a;--mut:#595959;--ok:#146c2e;--bad:#b3261e;--unk:#8a5a00;--card:#f5f5f5;--link:#0b57d0}
+@media(prefers-color-scheme:dark){:root{--bg:#121212;--fg:#eee;--mut:#b0b0b0;--ok:#6fd08c;--bad:#ff8a80;--unk:#f2c46d;--card:#1e1e1e;--link:#8ab4f8}}
+body{font:16px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--fg);max-width:760px;margin:0 auto;padding:16px}
+h1{font-size:1.3rem;margin-bottom:4px}h2{font-size:1.05rem;margin:18px 0 6px}
+a{color:var(--link)}
+select,button{font:inherit;padding:6px 10px;margin:4px 0;max-width:100%}
+table{border-collapse:collapse;width:100%;margin:8px 0}caption{text-align:left;color:var(--mut);font-size:.85rem;padding:2px 0}
+td,th{border-bottom:1px solid #8884;padding:4px 6px;text-align:left;font-size:.85rem;word-break:break-all}
+.card{background:var(--card);padding:10px 12px;border-radius:8px;margin:10px 0}
+.PASS{color:var(--ok);font-weight:700}.FAIL{color:var(--bad);font-weight:700}.HOLD{color:var(--unk);font-weight:700}
+small,.mut{color:var(--mut)}
+.back{font-size:.9rem;margin:0 0 6px}.bar,.note{font-size:.85rem;margin:0 0 6px}
+.pre p,.leg p{margin:6px 0}.pre b{white-space:nowrap}
+.story{margin:6px 0 2px}
+</style></head><body>
+<p class="bar"><a href="https://stsforensics.github.io/completeness-demo/" hreflang="en" lang="en">English</a> · <a href="https://stsforensics.github.io/completeness-demo/fr/" hreflang="fr" lang="fr">Français</a> · <a href="https://stsforensics.github.io/completeness-demo/de/" hreflang="de" lang="de">Deutsch</a> · <a href="https://stsforensics.github.io/completeness-demo/es/" hreflang="es" lang="es">Español</a> · <a href="https://stsforensics.github.io/completeness-demo/ja/" hreflang="ja" lang="ja">日本語</a> · <a href="https://stsforensics.github.io/completeness-demo/zh-hk/" hreflang="zh-HK" lang="zh-HK">繁體中文（香港）</a> · <a href="https://stsforensics.github.io/completeness-demo/zh-tw/" hreflang="zh-TW" lang="zh-TW">繁體中文（台灣）</a></p>
+<p class="note">机器翻译，尚未经母语人士校对。以英文版为准。</p>
+<p class="back"><a href="https://stsforensics.github.io/VerZan/zh-cn/">返回 VerZan Check</a>，StS Forensics Ltd 的免费文件指纹工具</p>
+<h1>没有改动，不等于没有遗漏</h1>
+<p>没有改动：我收到的记录没有任何改动。没有遗漏：就运营方所声明的范围而言，应该有的都在。请选择一个场景。教学演示，不是产品，不是证据，也不是建议。CC BY 4.0，StS Forensics Ltd，v3，2026年11月14日，供讨论的草稿。</p>
+
+<section class="pre" aria-labelledby="whatis">
+<h2 id="whatis">按你的角色说明</h2>
+<p><b>任何人：</b> 一本日记可以没有任何一页被改过，却仍然缺了最关键的一页。这个演示展示一份日志在缺少记录的情况下通过防篡改检查，以及哪些额外证据能发现这个缺口。</p>
+<p><b>管理层与风险负责人：</b> 一份没有问题的“没有改动”报告，只说明交到你手上的记录没有被改动，并没有说明记录是否齐全。请问清楚：谁持有独立的记录条数？有哪些外部系统（支付服务商、存储审计）可以和日志对账？</p>
+<p><b>保险公司、再保险公司与保险数据标准：</b> 试想一份理赔清单或分保明细，数字加起来完全吻合，却漏了一笔理赔。内部一致只是基本的卫生检查。要确保覆盖，需要声明范围，并与编制者无法控制的记录对账。</p>
+<p><b>AI 与 ML 工程师：</b> 每条记录对上一条的哈希值加上自己的内容计算哈希值。“没有改动”的检查（每条记录都与自己的指纹相符）能发现修改。缺口检查（编号与链接没有中断）能发现中间被删除的记录。任何人都可以重新计算一条链，所以被截去的尾部或整个重建的日志仍然能通过验证，除非有第三方持有检查点（记录条数与头部哈希值）。从未写入日志的智能体动作，只有对照智能体无法控制的系统才会出现。</p>
+<p><b>IETF 与标准界：</b> 这个演示没有签名、没有默克尔树，也没有时间戳。检查点相当于已签名的树头。真正的日志会加入已签名的树头和一致性证明，让见证者可以检查日志只是增长而没有被改写（<a href="https://www.rfc-editor.org/rfc/rfc9162">RFC 9162</a>，Certificate Transparency 2.0）。<a href="https://www.rfc-editor.org/rfc/rfc9943">RFC 9943</a>（SCITT）提供回执，显示某项声明已经登记。所有相关动作是否都已提交，是范围问题，每个部署仍须自行回答。<a href="https://doi.org/10.5281/zenodo.23857888">O4M Record Tests</a> 草案（C1 至 C23，意见征集至 2026 年 12 月 1 日）针对的正是这个遗漏问题，并打算与 SCITT 等格式并用。</p>
+<p class="mut">定位：<a href="https://stsforensics.github.io/VerZan/zh-cn/">VerZan Check</a> 问的是“这是否正是别人记录过的那个文件？”这个页面问下一个问题：记录里有没有遗漏？</p>
+</section>
+
+<section class="leg" aria-labelledby="legend">
+<h2 id="legend">如何阅读结果</h2>
+<p>没有改动：每条记录是否仍与计算指纹时一模一样？</p>
+<p>没有遗漏，依次三项测试：(a) 日志内部没有缺口，(b) 日志与见证者的检查点（记录条数与头部哈希值）相符，(c) 日志与外部第三方持有的记录相符。</p>
+<p>“没有改动”的结果是 PASS 或 FAIL。“没有遗漏”的结果是 FAIL、HOLD（所提供的证据无法判定）或“未发现缺口”。“未发现缺口”已是它所能给出的最好结果，绝不等于证明没有任何遗漏。</p>
+</section>
+
+<h2>试试看</h2>
+<label>场景 <select id="sc"></select></label>
+<div id="out" aria-live="polite"></div>
+
+<section aria-labelledby="lim">
+<h2 id="lim">这个演示的限制</h2>
+<p class="mut">只有一个写入者、一个见证者，没有签名。我们假设见证者诚实，并且独立于运营方；如果运营方控制检查点，他们也可以改写检查点。“没有遗漏”永远是相对于运营方所声明的范围而言。“未发现缺口”表示三项测试相符，并不表示没有任何遗漏。外部记录以文字完全相符来比对，而且只涵盖该外部一方看得到的动作。</p>
+</section>
+<p><small><a href="https://stsforensics.github.io/VerZan/zh-cn/">返回 VerZan Check</a>。一切完全在你的浏览器内运行，没有任何内容离开此页。许可 CC BY 4.0，StS Forensics Ltd。教学演示，供讨论的草稿。</small></p>
+<noscript><p>此演示需要 JavaScript 才能在你的浏览器内计算指纹。没有任何内容离开此页。</p></noscript>
+
+<script>
+const T={"errCrypto": "此演示需要支持 Web Crypto 的安全页面（https）。请用最新的浏览器以 https 打开。", "errStart": "抱歉，演示无法启动：", "intLabel": "没有改动", "compLabel": "没有遗漏", "nogap": "未发现缺口", "colon": "：", "stop": "。", "tSeq": "编号", "tAction": "动作", "tHash": "哈希值（前 12 位）", "tCaption": "交给检查程序的日志", "witLabel": "见证者（不是运营方）", "witFmt": "条数 {count}，头部 {head}", "none": "无", "outLabel": "外部记录", "sep": "；", "intPass": "每条记录仍与自己的指纹相符（重建过的日志也能通过这项检查）", "intFail": "第 {n} 条记录被改动", "seqFail": "编号在第 {pos} 个位置跳号（找到 {found}）：缺少一条记录", "chainFail": "第 {seq} 条记录没有指向上一条", "noWitness": "没有见证者的检查点：无法判断尾部是否被截去，或链是否被重建", "shortLog": "日志有 {len} 条记录，见证者看过 {count} 条", "witnessDiff": "直至第 {count} 条的历史与见证者的检查点不同（被改写或链被重建）", "noOutside": "没有外部记录：无法对账", "outMissing": "外部一方记录了 {list}，但日志中没有相符的记录", "ok": "日志内部没有缺口，并且与见证者的检查点及外部记录相符。它们都没有看到的内容，仍然看不见", "src1": "支付服务商与邮件网关", "src2": "支付服务商、邮件网关与存储审计", "scen": [{"n": "1 完好的日志", "s": "没有任何改动。见证者持有条数和头部哈希值，支付服务商和邮件网关也各有自己的记录。"}, {"n": "2 一条记录被改动", "s": "有人把退款由 120.00 改成 12.00，却保留旧的指纹。“没有改动”的检查能发现。支付服务商的记录也对不上。"}, {"n": "2b 记录被改动，链被重建，没有见证者", "s": "同样的修改，但所有指纹都重新计算。“没有改动”的检查通过，也没有任何独立的信息可以对不上。"}, {"n": "2c 记录被改动，链被重建，见证者保留了检查点", "s": "同一份重建的日志，但第三方保留了头部哈希值。重建的链无法与它相符。"}, {"n": "3 中间一条记录被删除", "s": "电子邮件那条记录被移除。其余记录都没有改动，所以“没有改动”的检查通过，但编号出现了缺口。"}, {"n": "3b 中间记录被删除，链被重建，见证者保留了条数", "s": "删除被重新编号和重新计算哈希值掩盖。内部两项检查都通过。见证者的条数揭穿了它。"}, {"n": "4 尾部被截去，没有见证者", "s": "最后两条记录被丢弃。剩下的是一条有效的链，所以内部两项检查都通过。没有见证者，缺口看不见。"}, {"n": "4b 尾部被截去，见证者保留了条数", "s": "同样的截去。见证者原本看到六条，现在只看到四条。"}, {"n": "5 动作从未被记入日志，没有外部核对", "s": "删除文件的动作从未写入日志。日志里现有的内容都完好无缺。"}, {"n": "5b 动作从未被记入日志，只有见证者", "s": "见证者与日志相符，因为它只计算日志所包含的内容。没有记入日志的动作仍然看不见。"}, {"n": "5c 动作从未被记入日志，外部记录有它", "s": "存储审计记录了这次删除。把日志与它对账，就能揭露遗漏。"}, {"n": "6 日志在检查点之后增长（正常）", "s": "见证者的检查点之后新增了一条记录。前六条仍与检查点相符，所以增长会被接受。"}]};
+const f=(s,o)=>s.replace(/\{(\w+)\}/g,(m,k)=>o[k]);
+const enc=new TextEncoder();
+async function H(s){const b=await crypto.subtle.digest("SHA-256",enc.encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
+const Z="0".repeat(64);
+const TRUTH=["open_ticket 41","read_customer 17","send_refund 120.00","email_customer 17","delete_file tmp.csv","close_ticket 41"];
+const OUT=["send_refund 120.00","email_customer 17"];
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+async function build(b){const log=[];let p=Z;for(let i=0;i<b.length;i++){const h=await H(`${p}|${i+1}|${b[i]}`);log.push({seq:i+1,body:b[i],prev:p,hash:h});p=h}return log}
+async function integrity(log){for(const e of log){if(await H(`${e.prev}|${e.seq}|${e.body}`)!==e.hash)return["FAIL",f(T.intFail,{n:e.seq})]}return["PASS",T.intPass]}
+function cp(l){return{count:l.length,head:l.length?l[l.length-1].hash:Z}}
+function completeness(log,w,o){let ok=true;const n=[];let p=Z;
+ for(let i=0;i<log.length;i++){const e=log[i];
+  if(e.seq!==i+1)return["FAIL",f(T.seqFail,{pos:i+1,found:e.seq})];
+  if(e.prev!==p)return["FAIL",f(T.chainFail,{seq:e.seq})];
+  p=e.hash}
+ if(!w){n.push(T.noWitness);ok=null}
+ else{
+  if(log.length<w.count)return["FAIL",f(T.shortLog,{len:log.length,count:w.count})];
+  const at=w.count===0?Z:log[w.count-1].hash;
+  if(at!==w.head)return["FAIL",f(T.witnessDiff,{count:w.count})]}
+ if(!o){n.push(T.noOutside);if(ok===true)ok=null}
+ else{const bs=log.map(e=>e.body),m=o.filter(r=>!bs.includes(r));if(m.length)return["FAIL",f(T.outMissing,{list:m.join(", ")})]}
+ return[ok===true?"PASS":"HOLD",n.length?n.join(T.sep):T.ok]}
+async function scenarios(){
+ const clean=await build(TRUTH),w=cp(clean),S=[];
+ const clone=x=>JSON.parse(JSON.stringify(x));
+ let k=0;
+ const add=(log,wit,out,src)=>{const t=T.scen[k++];S.push({name:t.n,story:t.s,log,w:wit,o:out,src})};
+ add(clean,w,OUT,T.src1);
+ const alt=clone(clean);alt[2].body="send_refund 12.00";
+ add(alt,w,OUT,T.src1);
+ const altR=await build(TRUTH.map(x=>x==="send_refund 120.00"?"send_refund 12.00":x));
+ add(altR,null,null,"");
+ add(altR,w,OUT,T.src1);
+ const del=clone(clean);del.splice(3,1);
+ add(del,w,OUT,T.src1);
+ const delR=await build(TRUTH.filter(x=>x!=="email_customer 17"));
+ add(delR,w,OUT,T.src1);
+ const tr=clean.slice(0,4);
+ add(tr,null,null,"");
+ add(tr,w,OUT,T.src1);
+ const om=await build(TRUTH.filter(x=>x!=="delete_file tmp.csv"));
+ add(om,null,null,"");
+ add(om,cp(om),null,"");
+ add(om,cp(om),[...OUT,"delete_file tmp.csv"],T.src2);
+ const grown=await build([...TRUTH,"open_ticket 42"]);
+ add(grown,w,OUT,T.src1);
+ return S}
+function view(s,i,c){
+ const label=c[0]==="PASS"?T.nogap:c[0];
+ return `<div class="card"><div class="story">${esc(s.story)}</div>
+  <div>${esc(T.intLabel)}${T.colon}<span class="${i[0]}">${i[0]}</span> <small>${esc(i[1])}</small></div>
+  <div>${esc(T.compLabel)}${T.colon}<span class="${c[0]}">${esc(label)}</span> <small>${esc(c[1])}</small></div></div>
+  <table><caption>${esc(T.tCaption)}</caption><tr><th>${esc(T.tSeq)}</th><th>${esc(T.tAction)}</th><th>${esc(T.tHash)}</th></tr>${s.log.map(e=>`<tr><td>${esc(e.seq)}</td><td>${esc(e.body)}</td><td>${esc(e.hash.slice(0,12))}</td></tr>`).join("")}</table>
+  <small>${esc(T.witLabel)}${T.colon}${s.w?esc(f(T.witFmt,{count:s.w.count,head:s.w.head.slice(0,12)})):esc(T.none)}${T.stop} ${esc(T.outLabel)}${s.src?` (${esc(s.src)})`:""}${T.colon}${s.o?esc(s.o.join("; ")):esc(T.none)}${T.stop}</small>`}
+if(typeof document!=="undefined")(async()=>{
+ const out=document.getElementById("out");
+ if(!(window.crypto&&crypto.subtle)){out.textContent=T.errCrypto;return}
+ try{
+  const S=await scenarios(),sel=document.getElementById("sc");
+  S.forEach((s,i)=>{const o=document.createElement("option");o.value=i;o.textContent=s.name;sel.appendChild(o)});
+  async function show(){const s=S[sel.value],i=await integrity(s.log),c=completeness(s.log,s.w,s.o);out.innerHTML=view(s,i,c)}
+  sel.onchange=show;await show()
+ }catch(e){out.textContent=T.errStart+e.message}
+})();
+</script></body></html>

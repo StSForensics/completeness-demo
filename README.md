@@ -1,23 +1,15 @@
-# Integrity is not completeness: a six-scenario log demo
+# Integrity is not completeness: a log demo
 
-Draft v1, 2026-11-14. CC BY 4.0. StS Forensics Ltd. Teaching toy: not a product, not evidence, not a test suite for any standard.
+v3, 14 November 2026. CC BY 4.0. StS Forensics Ltd. Teaching toy: one writer, one witness, no signatures. Not a product, not evidence, not advice. Draft for discussion.
 
-Integrity means nothing in the records you were given has been changed.
-Completeness means nothing that should be there is missing.
-A hash chain gives you the first. It cannot give you the second on its own.
+Live page: https://stsforensics.github.io/completeness-demo/ (also in French, German, Spanish, Japanese and three Chinese variants; machine translations, the English page prevails).
 
-Run it (Python 3, standard library only):
+Integrity: is each entry still exactly as it was fingerprinted?
+Completeness: is anything that should be there missing, for the scope the operator declared? Three tests in order: no gap inside the log; agreement with a witness checkpoint (entry count and head hash); agreement with records held by outside parties. The result is FAIL, HOLD (the evidence supplied cannot settle it) or NO GAP FOUND, which is never proof that nothing is missing.
+
+Run the same twelve scenarios in a terminal (Python 3, standard library only):
 
     python3 gap_demo.py
     python3 gap_demo.py --json
 
-Or open gap_demo.html in a browser (no server, no network, SHA-256 from the browser).
-
-Scenarios: clean log; one entry altered; middle entry deleted; tail cut off (with and without a witness); action never logged (no outside check, witness only, outside record present).
-
-What each extra party adds:
-- Sequence numbers and chain: catch alteration and middle deletion.
-- Witness checkpoint (count and head hash held by someone other than the operator): catches tail cut and whole-chain rebuild.
-- Outside records (for example a payment or network provider's own log): the only thing that exposes an action that was never logged.
-
-Limits: the outside records only cover what the outside party can see (the declared scope). A pass means "consistent with those sources", not "everything happened is recorded".
+The verdicts match the web page.

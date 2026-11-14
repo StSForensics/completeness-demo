@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>改ざんされていないことと、欠けていないことは別：ログのデモ</title>
+<meta name="description" content="ログは改ざん検査に合格しても、記録が欠けていることがあります。シナリオを選んで、どの追加の証拠がその穴を埋めるかをご覧ください。StS Forensics Ltd の学習用の試作です。">
+<link rel="canonical" href="https://stsforensics.github.io/completeness-demo/ja/">
+<link rel="alternate" hreflang="en" href="https://stsforensics.github.io/completeness-demo/">
+<link rel="alternate" hreflang="fr" href="https://stsforensics.github.io/completeness-demo/fr/">
+<link rel="alternate" hreflang="de" href="https://stsforensics.github.io/completeness-demo/de/">
+<link rel="alternate" hreflang="es" href="https://stsforensics.github.io/completeness-demo/es/">
+<link rel="alternate" hreflang="ja" href="https://stsforensics.github.io/completeness-demo/ja/">
+<link rel="alternate" hreflang="zh-HK" href="https://stsforensics.github.io/completeness-demo/zh-hk/">
+<link rel="alternate" hreflang="zh-TW" href="https://stsforensics.github.io/completeness-demo/zh-tw/">
+<link rel="alternate" hreflang="zh-CN" href="https://stsforensics.github.io/completeness-demo/zh-cn/">
+<link rel="alternate" hreflang="x-default" href="https://stsforensics.github.io/completeness-demo/">
+<style>
+:root{--bg:#fff;--fg:#1a1a1a;--mut:#595959;--ok:#146c2e;--bad:#b3261e;--unk:#8a5a00;--card:#f5f5f5;--link:#0b57d0}
+@media(prefers-color-scheme:dark){:root{--bg:#121212;--fg:#eee;--mut:#b0b0b0;--ok:#6fd08c;--bad:#ff8a80;--unk:#f2c46d;--card:#1e1e1e;--link:#8ab4f8}}
+body{font:16px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--fg);max-width:760px;margin:0 auto;padding:16px}
+h1{font-size:1.3rem;margin-bottom:4px}h2{font-size:1.05rem;margin:18px 0 6px}
+a{color:var(--link)}
+select,button{font:inherit;padding:6px 10px;margin:4px 0;max-width:100%}
+table{border-collapse:collapse;width:100%;margin:8px 0}caption{text-align:left;color:var(--mut);font-size:.85rem;padding:2px 0}
+td,th{border-bottom:1px solid #8884;padding:4px 6px;text-align:left;font-size:.85rem;word-break:break-all}
+.card{background:var(--card);padding:10px 12px;border-radius:8px;margin:10px 0}
+.PASS{color:var(--ok);font-weight:700}.FAIL{color:var(--bad);font-weight:700}.HOLD{color:var(--unk);font-weight:700}
+small,.mut{color:var(--mut)}
+.back{font-size:.9rem;margin:0 0 6px}.bar,.note{font-size:.85rem;margin:0 0 6px}
+.pre p,.leg p{margin:6px 0}.pre b{white-space:nowrap}
+.story{margin:6px 0 2px}
+</style></head><body>
+<p class="bar"><a href="https://stsforensics.github.io/completeness-demo/" hreflang="en" lang="en">English</a> · <a href="https://stsforensics.github.io/completeness-demo/fr/" hreflang="fr" lang="fr">Français</a> · <a href="https://stsforensics.github.io/completeness-demo/de/" hreflang="de" lang="de">Deutsch</a> · <a href="https://stsforensics.github.io/completeness-demo/es/" hreflang="es" lang="es">Español</a> · <a href="https://stsforensics.github.io/completeness-demo/zh-hk/" hreflang="zh-HK" lang="zh-HK">繁體中文（香港）</a> · <a href="https://stsforensics.github.io/completeness-demo/zh-tw/" hreflang="zh-TW" lang="zh-TW">繁體中文（台灣）</a> · <a href="https://stsforensics.github.io/completeness-demo/zh-cn/" hreflang="zh-CN" lang="zh-CN">简体中文</a></p>
+<p class="note">機械翻訳であり、ネイティブによる確認は済んでいません。英語版が優先します。</p>
+<p class="back"><a href="https://stsforensics.github.io/VerZan/ja/">VerZan Check に戻る</a>（StS Forensics Ltd の無料のファイル指紋ツール）</p>
+<h1>改ざんされていないことと、欠けていないことは別</h1>
+<p>完全性：渡された記録は何も変更されていないこと。網羅性：運用者が宣言した範囲について、あるべきものが欠けていないこと。シナリオを選んでください。学習用の試作で、製品でも証拠でも助言でもありません。CC BY 4.0、StS Forensics Ltd、v3、2026年11月14日、議論のための草案。</p>
+
+<section class="pre" aria-labelledby="whatis">
+<h2 id="whatis">役割別の説明</h2>
+<p><b>どなたでも：</b> 日記は1ページも書き換えられていなくても、肝心の1ページが抜けていることがあります。このデモは、記録が欠けているのに改ざん検査に合格するログと、それを見つける追加の証拠を示します。</p>
+<p><b>経営・リスク管理の方：</b> 問題のない完全性レポートが示すのは、渡された記録が変更されていないことだけです。すべて揃っているかどうかは何も語りません。エントリ数を独立に数えているのは誰か、ログと突き合わせられる外部システム（決済事業者、ストレージ監査）は何かを確認してください。</p>
+<p><b>保険会社・再保険会社・保険データ標準の方：</b> 合計は完璧に合うのに、請求が1件抜けている請求一覧やボルデローを思い浮かべてください。内部の整合は衛生確認にすぎません。保険の保証には、宣言された範囲と、作成者が管理していない記録との突き合わせが必要です。</p>
+<p><b>AI・MLエンジニアの方：</b> 各エントリは、直前のハッシュと自分の本文のハッシュを取ります。完全性チェック（各エントリが自分の指紋と一致）は書き換えを検出します。欠落チェック（番号とリンクが途切れない）は途中の削除を検出します。チェーンは誰でも再計算できるため、末尾の切り落としや全面的な作り直しは、第三者がチェックポイント（エントリ数と先頭ハッシュ）を保持していない限り、検証を通過します。ログに1行も書かれなかったエージェントの行動は、エージェントが管理していないシステムと突き合わせたときにだけ現れます。</p>
+<p><b>IETF・標準化の方：</b> この試作には、署名も、マークル木も、タイムスタンプもありません。チェックポイントは、署名付きツリーヘッドの代役です。実際のログは、署名付きヘッドと整合性証明を加え、証人がログが追記だけされたことを確認できるようにします（<a href="https://www.rfc-editor.org/rfc/rfc9162">RFC 9162</a>、Certificate Transparency 2.0）。<a href="https://www.rfc-editor.org/rfc/rfc9943">RFC 9943</a>（SCITT）は、ある声明が登録されたことを示すレシートを提供します。関連するすべての行動が提出されたかどうかは範囲の問題であり、各導入が引き続き答えを出す必要があります。草案段階の<a href="https://doi.org/10.5281/zenodo.23857888">O4M Record Tests</a>（C1からC23、コメントは2026年12月1日まで受付）は、この欠落の問題に焦点を当て、SCITTなどの形式と並べて使うことを想定しています。</p>
+<p class="mut">位置づけ：<a href="https://stsforensics.github.io/VerZan/ja/">VerZan Check</a> は「これは誰かが記録したファイルそのものか」を問います。このページは次の問いを扱います。記録から何か欠けていないか。</p>
+</section>
+
+<section class="leg" aria-labelledby="legend">
+<h2 id="legend">結果の読み方</h2>
+<p>完全性：各エントリは、指紋を取ったときのままか。</p>
+<p>網羅性、順に3つの検査：(a) ログ内部に欠落がない、(b) ログが証人のチェックポイント（エントリ数と先頭ハッシュ）と一致する、(c) ログが外部の第三者の記録と一致する。</p>
+<p>完全性の結果は PASS か FAIL です。網羅性の結果は FAIL、HOLD（提示された証拠では判断できない）、または「欠落なし」です。「欠落なし」は言える範囲で最良の結果であり、何も欠けていないことの証明にはなりません。</p>
+</section>
+
+<h2>試す</h2>
+<label>シナリオ <select id="sc"></select></label>
+<div id="out" aria-live="polite"></div>
+
+<section aria-labelledby="lim">
+<h2 id="lim">この試作の限界</h2>
+<p class="mut">書き手は1人、証人は1人、署名はありません。証人は正直で運用者から独立していると仮定しています。運用者がチェックポイントを管理していれば、それも書き換えられます。網羅性は常に、運用者が宣言した範囲に対するものです。「欠落なし」は3つの検査が一致したという意味で、何も欠けていないという意味ではありません。外部の記録は文字列の完全一致で突き合わせ、その外部の当事者が見える行動に限ります。</p>
+</section>
+<p><small><a href="https://stsforensics.github.io/VerZan/ja/">VerZan Check に戻る</a>。すべてお使いのブラウザ内で動作し、このページの外には何も送られません。ライセンス CC BY 4.0、StS Forensics Ltd。学習用の試作、議論のための草案。</small></p>
+<noscript><p>このデモは、ブラウザ内で指紋を計算するために JavaScript が必要です。ページの外には何も送られません。</p></noscript>
+
+<script>
+const T={"errCrypto": "このデモには、Web Crypto が使える安全なページ（https）が必要です。最新のブラウザで https で開いてください。", "errStart": "申し訳ありません。デモを起動できませんでした：", "intLabel": "完全性（変更なし）", "compLabel": "網羅性（欠落なし）", "nogap": "欠落なし", "colon": "：", "stop": "。", "tSeq": "番号", "tAction": "操作", "tHash": "ハッシュ（先頭12桁）", "tCaption": "検査に渡されたログ", "witLabel": "証人（運用者ではない）", "witFmt": "件数 {count}、先頭 {head}", "none": "なし", "outLabel": "外部の記録", "sep": "；", "intPass": "各エントリは自分の指紋と一致しています（作り直されたログもこの検査は通過します）", "intFail": "エントリ {n} が書き換えられました", "seqFail": "{pos} 番目で番号が飛んでいます（実際は {found}）：エントリが欠けています", "chainFail": "エントリ {seq} が直前のエントリを指していません", "noWitness": "証人のチェックポイントがありません：末尾が切られたのか、チェーンが作り直されたのか判断できません", "shortLog": "ログは {len} 件、証人は {count} 件を確認しています", "witnessDiff": "エントリ {count} までの履歴が証人のチェックポイントと異なります（書き換え、またはチェーンの作り直し）", "noOutside": "外部の記録がありません：突き合わせできません", "outMissing": "外部の当事者は {list} を記録していますが、ログには対応するエントリがありません", "ok": "ログ内部に欠落がなく、証人のチェックポイントおよび外部の記録と一致しています。そのどれも見ていないものは、見えないままです", "src1": "決済事業者とメールゲートウェイ", "src2": "決済事業者、メールゲートウェイ、ストレージ監査", "scen": [{"n": "1 正常なログ", "s": "何も触られていません。証人が件数と先頭ハッシュを保持し、決済事業者とメールゲートウェイもそれぞれ記録を持っています。"}, {"n": "2 エントリを1件書き換え", "s": "誰かが返金を 120.00 から 12.00 に書き換えますが、古い指紋はそのままです。完全性チェックが検出します。決済事業者の記録とも食い違います。"}, {"n": "2b 書き換えてチェーンを作り直し、証人なし", "s": "同じ書き換えですが、すべての指紋を再計算します。完全性は通過し、食い違いを示す独立した情報もありません。"}, {"n": "2c 書き換えてチェーンを作り直し、証人がチェックポイントを保持", "s": "同じ作り直したログですが、第三者が先頭ハッシュを保持しています。作り直したチェーンはそれと一致できません。"}, {"n": "3 途中のエントリを削除", "s": "メールのエントリが取り除かれます。残りのエントリはどれも変更されていないので完全性は通過しますが、番号に穴が空きます。"}, {"n": "3b 途中を削除してチェーンを作り直し、証人が件数を保持", "s": "削除は、番号の振り直しと再ハッシュで隠されます。内部の2つの検査は通過します。証人の件数がそれを露呈させます。"}, {"n": "4 末尾を切り落とし、証人なし", "s": "最後の2件が削除されます。残りは有効なチェーンなので、内部の2つの検査は通過します。証人がいないため、欠落は見えません。"}, {"n": "4b 末尾を切り落とし、証人が件数を保持", "s": "同じ切り落としです。証人は6件を見ていましたが、今は4件しか見えません。"}, {"n": "5 記録されなかった操作、外部確認なし", "s": "ファイルの削除はログに書かれませんでした。ログにあるものはすべて無傷です。"}, {"n": "5b 記録されなかった操作、証人のみ", "s": "証人はログに含まれるものだけを数えるため、ログと一致します。記録されなかった操作は見えないままです。"}, {"n": "5c 記録されなかった操作、外部の記録にはある", "s": "ストレージ監査が削除を記録していました。ログをそれと突き合わせると、欠落が露呈します。"}, {"n": "6 チェックポイント後にログが伸びた（正常）", "s": "証人のチェックポイントの後に新しいエントリが追加されました。最初の6件はそれと一致し続けるので、追記は受け入れられます。"}]};
+const f=(s,o)=>s.replace(/\{(\w+)\}/g,(m,k)=>o[k]);
+const enc=new TextEncoder();
+async function H(s){const b=await crypto.subtle.digest("SHA-256",enc.encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
+const Z="0".repeat(64);
+const TRUTH=["open_ticket 41","read_customer 17","send_refund 120.00","email_customer 17","delete_file tmp.csv","close_ticket 41"];
+const OUT=["send_refund 120.00","email_customer 17"];
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+async function build(b){const log=[];let p=Z;for(let i=0;i<b.length;i++){const h=await H(`${p}|${i+1}|${b[i]}`);log.push({seq:i+1,body:b[i],prev:p,hash:h});p=h}return log}
+async function integrity(log){for(const e of log){if(await H(`${e.prev}|${e.seq}|${e.body}`)!==e.hash)return["FAIL",f(T.intFail,{n:e.seq})]}return["PASS",T.intPass]}
+function cp(l){return{count:l.length,head:l.length?l[l.length-1].hash:Z}}
+function completeness(log,w,o){let ok=true;const n=[];let p=Z;
+ for(let i=0;i<log.length;i++){const e=log[i];
+  if(e.seq!==i+1)return["FAIL",f(T.seqFail,{pos:i+1,found:e.seq})];
+  if(e.prev!==p)return["FAIL",f(T.chainFail,{seq:e.seq})];
+  p=e.hash}
+ if(!w){n.push(T.noWitness);ok=null}
+ else{
+  if(log.length<w.count)return["FAIL",f(T.shortLog,{len:log.length,count:w.count})];
+  const at=w.count===0?Z:log[w.count-1].hash;
+  if(at!==w.head)return["FAIL",f(T.witnessDiff,{count:w.count})]}
+ if(!o){n.push(T.noOutside);if(ok===true)ok=null}
+ else{const bs=log.map(e=>e.body),m=o.filter(r=>!bs.includes(r));if(m.length)return["FAIL",f(T.outMissing,{list:m.join(", ")})]}
+ return[ok===true?"PASS":"HOLD",n.length?n.join(T.sep):T.ok]}
+async function scenarios(){
+ const clean=await build(TRUTH),w=cp(clean),S=[];
+ const clone=x=>JSON.parse(JSON.stringify(x));
+ let k=0;
+ const add=(log,wit,out,src)=>{const t=T.scen[k++];S.push({name:t.n,story:t.s,log,w:wit,o:out,src})};
+ add(clean,w,OUT,T.src1);
+ const alt=clone(clean);alt[2].body="send_refund 12.00";
+ add(alt,w,OUT,T.src1);
+ const altR=await build(TRUTH.map(x=>x==="send_refund 120.00"?"send_refund 12.00":x));
+ add(altR,null,null,"");
+ add(altR,w,OUT,T.src1);
+ const del=clone(clean);del.splice(3,1);
+ add(del,w,OUT,T.src1);
+ const delR=await build(TRUTH.filter(x=>x!=="email_customer 17"));
+ add(delR,w,OUT,T.src1);
+ const tr=clean.slice(0,4);
+ add(tr,null,null,"");
+ add(tr,w,OUT,T.src1);
+ const om=await build(TRUTH.filter(x=>x!=="delete_file tmp.csv"));
+ add(om,null,null,"");
+ add(om,cp(om),null,"");
+ add(om,cp(om),[...OUT,"delete_file tmp.csv"],T.src2);
+ const grown=await build([...TRUTH,"open_ticket 42"]);
+ add(grown,w,OUT,T.src1);
+ return S}
+function view(s,i,c){
+ const label=c[0]==="PASS"?T.nogap:c[0];
+ return `<div class="card"><div class="story">${esc(s.story)}</div>
+  <div>${esc(T.intLabel)}${T.colon}<span class="${i[0]}">${i[0]}</span> <small>${esc(i[1])}</small></div>
+  <div>${esc(T.compLabel)}${T.colon}<span class="${c[0]}">${esc(label)}</span> <small>${esc(c[1])}</small></div></div>
+  <table><caption>${esc(T.tCaption)}</caption><tr><th>${esc(T.tSeq)}</th><th>${esc(T.tAction)}</th><th>${esc(T.tHash)}</th></tr>${s.log.map(e=>`<tr><td>${esc(e.seq)}</td><td>${esc(e.body)}</td><td>${esc(e.hash.slice(0,12))}</td></tr>`).join("")}</table>
+  <small>${esc(T.witLabel)}${T.colon}${s.w?esc(f(T.witFmt,{count:s.w.count,head:s.w.head.slice(0,12)})):esc(T.none)}${T.stop} ${esc(T.outLabel)}${s.src?` (${esc(s.src)})`:""}${T.colon}${s.o?esc(s.o.join("; ")):esc(T.none)}${T.stop}</small>`}
+if(typeof document!=="undefined")(async()=>{
+ const out=document.getElementById("out");
+ if(!(window.crypto&&crypto.subtle)){out.textContent=T.errCrypto;return}
+ try{
+  const S=await scenarios(),sel=document.getElementById("sc");
+  S.forEach((s,i)=>{const o=document.createElement("option");o.value=i;o.textContent=s.name;sel.appendChild(o)});
+  async function show(){const s=S[sel.value],i=await integrity(s.log),c=completeness(s.log,s.w,s.o);out.innerHTML=view(s,i,c)}
+  sel.onchange=show;await show()
+ }catch(e){out.textContent=T.errStart+e.message}
+})();
+</script></body></html>

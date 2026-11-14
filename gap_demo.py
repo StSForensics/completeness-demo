@@ -1,112 +1,105 @@
 #!/usr/bin/env python3
 """
-gap_demo.py  (2026-11-14, v1, CC BY 4.0, StS Forensics Ltd, draft for discussion)
+gap_demo.py  v3, 14 Nov 2026, CC BY 4.0, StS Forensics Ltd, draft for discussion.
+Same twelve scenarios and the same verdicts as the web page
+https://stsforensics.github.io/completeness-demo/  (Python standard library only).
 
-Shows, with the Python standard library only, the difference between:
-  INTEGRITY    = nothing in the records I was given has been changed
-  COMPLETENESS = nothing that should be there is missing
+Integrity    : is each entry still exactly as it was fingerprinted? PASS or FAIL.
+Completeness : three tests in order:
+   (a) no gap inside the log (numbering and links run unbroken)
+   (b) the log agrees with a witness checkpoint (entry count and head hash)
+   (c) the log agrees with records held by outside parties
+ Result is FAIL, HOLD (the evidence supplied cannot settle it) or NO GAP FOUND.
+ NO GAP FOUND is the best it can say. It is never proof that nothing is missing.
 
-Six scenarios. Run:  python3 gap_demo.py        (prints a table)
-                     python3 gap_demo.py --json (machine readable)
-
-Teaching toy. Not a product, not evidence, not a test suite for any standard.
-It uses a hash chain, a sequence number, a witness checkpoint held by someone
-other than the operator, and a reconciliation against records the operator does
-not control (for example a network or cloud provider's own log).
+Teaching toy: one writer, one witness, no signatures. Not a product, not evidence, not advice.
+Run:  python3 gap_demo.py        or   python3 gap_demo.py --json
 """
 import hashlib, json, sys, copy
 
-def h(s): return hashlib.sha256(s.encode()).hexdigest()
-
-def entry_hash(prev, seq, body):
-    return h(f"{prev}|{seq}|{body}")
-
-def build_log(bodies):
-    log, prev = [], "0" * 64
-    for i, b in enumerate(bodies, start=1):
-        eh = entry_hash(prev, i, b)
-        log.append({"seq": i, "body": b, "prev": prev, "hash": eh})
-        prev = eh
-    return log
-
-# What the agent really did (ground truth, known only in this demo)
+Z = "0" * 64
 TRUTH = ["open_ticket 41", "read_customer 17", "send_refund 120.00",
          "email_customer 17", "delete_file tmp.csv", "close_ticket 41"]
+OUT = ["send_refund 120.00", "email_customer 17"]
 
-# Records held by a party the operator does not control (e.g. the payment provider).
-# It saw the refund and the email, nothing else.
-OUTSIDE_RECORDS = ["send_refund 120.00", "email_customer 17"]
+def H(s): return hashlib.sha256(s.encode()).hexdigest()
+
+def build(bodies):
+    log, prev = [], Z
+    for i, b in enumerate(bodies, start=1):
+        h = H(f"{prev}|{i}|{b}")
+        log.append({"seq": i, "body": b, "prev": prev, "hash": h})
+        prev = h
+    return log
 
 def checkpoint(log):
-    """Witness (not the operator) holds the latest count and head hash."""
-    return {"count": len(log), "head": log[-1]["hash"] if log else "0" * 64}
+    return {"count": len(log), "head": log[-1]["hash"] if log else Z}
 
 def integrity(log):
-    prev = "0" * 64
-    for i, e in enumerate(log, start=1):
-        if e["seq"] != i: return False, f"sequence jumps at position {i} (found {e['seq']})"
-        if e["prev"] != prev: return False, f"chain broken at seq {e['seq']}"
-        if entry_hash(e["prev"], e["seq"], e["body"]) != e["hash"]:
-            return False, f"entry {e['seq']} was altered"
-        prev = e["hash"]
-    return True, "chain and numbering consistent"
+    for e in log:
+        if H(f"{e['prev']}|{e['seq']}|{e['body']}") != e["hash"]:
+            return "FAIL", f"entry {e['seq']} was altered"
+    return "PASS", "each entry still matches its own fingerprint (a rebuilt log passes this too)"
 
-def completeness(log, witness, outside, declared_scope):
-    notes = []
-    ok = True
+def completeness(log, witness, outside):
+    notes, ok = [], True
+    prev = Z
+    for i, e in enumerate(log, start=1):
+        if e["seq"] != i:
+            return "FAIL", f"numbering jumps at position {i} (found {e['seq']}): an entry is missing"
+        if e["prev"] != prev:
+            return "FAIL", f"entry {e['seq']} does not point to the one before it"
+        prev = e["hash"]
     if witness is None:
         notes.append("no witness checkpoint: cannot say if the tail was cut or the chain rebuilt")
         ok = None
     else:
         if len(log) < witness["count"]:
-            return False, f"log has {len(log)} entries, witness saw {witness['count']}"
-        if len(log) == witness["count"] and (not log or log[-1]["hash"] != witness["head"]):
-            return False, "head hash differs from the witness checkpoint (chain rebuilt)"
-    bodies = [e["body"] for e in log]
+            return "FAIL", f"log has {len(log)} entries, witness saw {witness['count']}"
+        at = Z if witness["count"] == 0 else log[witness["count"] - 1]["hash"]
+        if at != witness["head"]:
+            return "FAIL", f"history up to entry {witness['count']} differs from the witness checkpoint (rewritten or chain rebuilt)"
     if outside is None:
         notes.append("no outside records: cannot reconcile")
         if ok is True: ok = None
     else:
+        bodies = [e["body"] for e in log]
         missing = [r for r in outside if r not in bodies]
         if missing:
-            return False, f"outside party recorded {missing} but the log does not"
-    return ok, "; ".join(notes) if notes else "matches witness and outside records for the declared scope"
-
-def verdict(v):
-    return {True: "PASS", False: "FAIL", None: "UNKNOWN"}[v]
+            return "FAIL", f"outside party recorded {', '.join(missing)} but the log has no matching entry"
+    if ok is True:
+        return "NO GAP FOUND", "no gap inside the log, and agreement with the witness checkpoint and the outside records. Anything none of them saw would still be invisible"
+    return "HOLD", "; ".join(notes)
 
 def scenarios():
-    S = []
-    clean = build_log(TRUTH)
-    wit = checkpoint(clean)
-
-    S.append(("1 Clean log", clean, wit, OUTSIDE_RECORDS))
-
+    clean = build(TRUTH); w = checkpoint(clean); S = []
+    S.append(("1 Clean log", clean, w, OUT))
     alt = copy.deepcopy(clean); alt[2]["body"] = "send_refund 12.00"
-    S.append(("2 One entry altered", alt, wit, OUTSIDE_RECORDS))
-
+    S.append(("2 One entry altered", alt, w, OUT))
+    altR = build([("send_refund 12.00" if x == "send_refund 120.00" else x) for x in TRUTH])
+    S.append(("2b Entry altered, chain rebuilt, no witness", altR, None, None))
+    S.append(("2c Entry altered, chain rebuilt, witness kept checkpoint", altR, w, OUT))
     dele = copy.deepcopy(clean); del dele[3]
-    S.append(("3 Middle entry deleted", dele, wit, OUTSIDE_RECORDS))
-
-    trunc = copy.deepcopy(clean)[:4]
-    S.append(("4 Tail cut off, no witness", trunc, None, None))
-    S.append(("4b Tail cut off, witness kept count", trunc, wit, OUTSIDE_RECORDS))
-
-    # Operator never wrote the risky action and rebuilds a perfect chain
-    omit_bodies = [b for b in TRUTH if b != "delete_file tmp.csv"]
-    omitted = build_log(omit_bodies)
-    S.append(("5 Action never logged, no outside check", omitted, None, None))
-    S.append(("5b Action never logged, witness only", omitted, checkpoint(omitted), None))
-    S.append(("5c Action never logged, outside record has it", omitted, checkpoint(omitted), OUTSIDE_RECORDS + ["delete_file tmp.csv"]))
+    S.append(("3 Middle entry deleted", dele, w, OUT))
+    delR = build([x for x in TRUTH if x != "email_customer 17"])
+    S.append(("3b Middle entry deleted, chain rebuilt, witness kept count", delR, w, OUT))
+    tr = clean[:4]
+    S.append(("4 Tail cut off, no witness", tr, None, None))
+    S.append(("4b Tail cut off, witness kept count", tr, w, OUT))
+    om = build([x for x in TRUTH if x != "delete_file tmp.csv"])
+    S.append(("5 Action never logged, no outside check", om, None, None))
+    S.append(("5b Action never logged, witness only", om, checkpoint(om), None))
+    S.append(("5c Action never logged, outside record has it", om, checkpoint(om), OUT + ["delete_file tmp.csv"]))
+    grown = build(TRUTH + ["open_ticket 42"])
+    S.append(("6 Log grew after the checkpoint (normal)", grown, w, OUT))
     return S
 
 def run():
     rows = []
-    for name, log, wit, outside in scenarios():
-        i_ok, i_msg = integrity(log)
-        c_ok, c_msg = completeness(log, wit, outside, TRUTH)
-        rows.append({"scenario": name, "integrity": verdict(i_ok), "integrity_note": i_msg,
-                     "completeness": verdict(c_ok), "completeness_note": c_msg})
+    for name, log, w, o in scenarios():
+        i, im = integrity(log); c, cm = completeness(log, w, o)
+        rows.append({"scenario": name, "integrity": i, "integrity_note": im,
+                     "completeness": c, "completeness_note": cm})
     return rows
 
 if __name__ == "__main__":
@@ -114,8 +107,8 @@ if __name__ == "__main__":
     if "--json" in sys.argv:
         print(json.dumps(rows, indent=2)); sys.exit(0)
     for r in rows:
-        print(f"{r['scenario']}")
-        print(f"   integrity   : {r['integrity']:8} {r['integrity_note']}")
-        print(f"   completeness: {r['completeness']:8} {r['completeness_note']}")
-    print("\nPoint: scenarios 5 and 5b pass integrity and cannot show completeness."
-          "\nOnly a record held by someone else (5c) exposes the missing action.")
+        print(r["scenario"])
+        print(f"   integrity   : {r['integrity']:13} {r['integrity_note']}")
+        print(f"   completeness: {r['completeness']:13} {r['completeness_note']}")
+    print("\nPoint: scenarios 5 and 5b pass integrity and cannot show completeness. "
+          "Only a record held by someone else (5c) exposes the missing action.")

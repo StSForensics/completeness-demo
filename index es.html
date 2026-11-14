@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>La integridad no es la completitud: una demostración con un registro</title>
+<meta name="description" content="Un registro puede superar una comprobación de manipulación y aun así carecer de entradas. Elija un escenario y vea qué pruebas adicionales cierran la brecha. Juguete didáctico de StS Forensics Ltd.">
+<link rel="canonical" href="https://stsforensics.github.io/completeness-demo/es/">
+<link rel="alternate" hreflang="en" href="https://stsforensics.github.io/completeness-demo/">
+<link rel="alternate" hreflang="fr" href="https://stsforensics.github.io/completeness-demo/fr/">
+<link rel="alternate" hreflang="de" href="https://stsforensics.github.io/completeness-demo/de/">
+<link rel="alternate" hreflang="es" href="https://stsforensics.github.io/completeness-demo/es/">
+<link rel="alternate" hreflang="ja" href="https://stsforensics.github.io/completeness-demo/ja/">
+<link rel="alternate" hreflang="zh-HK" href="https://stsforensics.github.io/completeness-demo/zh-hk/">
+<link rel="alternate" hreflang="zh-TW" href="https://stsforensics.github.io/completeness-demo/zh-tw/">
+<link rel="alternate" hreflang="zh-CN" href="https://stsforensics.github.io/completeness-demo/zh-cn/">
+<link rel="alternate" hreflang="x-default" href="https://stsforensics.github.io/completeness-demo/">
+<style>
+:root{--bg:#fff;--fg:#1a1a1a;--mut:#595959;--ok:#146c2e;--bad:#b3261e;--unk:#8a5a00;--card:#f5f5f5;--link:#0b57d0}
+@media(prefers-color-scheme:dark){:root{--bg:#121212;--fg:#eee;--mut:#b0b0b0;--ok:#6fd08c;--bad:#ff8a80;--unk:#f2c46d;--card:#1e1e1e;--link:#8ab4f8}}
+body{font:16px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--fg);max-width:760px;margin:0 auto;padding:16px}
+h1{font-size:1.3rem;margin-bottom:4px}h2{font-size:1.05rem;margin:18px 0 6px}
+a{color:var(--link)}
+select,button{font:inherit;padding:6px 10px;margin:4px 0;max-width:100%}
+table{border-collapse:collapse;width:100%;margin:8px 0}caption{text-align:left;color:var(--mut);font-size:.85rem;padding:2px 0}
+td,th{border-bottom:1px solid #8884;padding:4px 6px;text-align:left;font-size:.85rem;word-break:break-all}
+.card{background:var(--card);padding:10px 12px;border-radius:8px;margin:10px 0}
+.PASS{color:var(--ok);font-weight:700}.FAIL{color:var(--bad);font-weight:700}.HOLD{color:var(--unk);font-weight:700}
+small,.mut{color:var(--mut)}
+.back{font-size:.9rem;margin:0 0 6px}.bar,.note{font-size:.85rem;margin:0 0 6px}
+.pre p,.leg p{margin:6px 0}.pre b{white-space:nowrap}
+.story{margin:6px 0 2px}
+</style></head><body>
+<p class="bar"><a href="https://stsforensics.github.io/completeness-demo/" hreflang="en" lang="en">English</a> · <a href="https://stsforensics.github.io/completeness-demo/fr/" hreflang="fr" lang="fr">Français</a> · <a href="https://stsforensics.github.io/completeness-demo/de/" hreflang="de" lang="de">Deutsch</a> · <a href="https://stsforensics.github.io/completeness-demo/ja/" hreflang="ja" lang="ja">日本語</a> · <a href="https://stsforensics.github.io/completeness-demo/zh-hk/" hreflang="zh-HK" lang="zh-HK">繁體中文（香港）</a> · <a href="https://stsforensics.github.io/completeness-demo/zh-tw/" hreflang="zh-TW" lang="zh-TW">繁體中文（台灣）</a> · <a href="https://stsforensics.github.io/completeness-demo/zh-cn/" hreflang="zh-CN" lang="zh-CN">简体中文</a></p>
+<p class="note">Traducción automática, no revisada por un hablante nativo. Prevalece el inglés.</p>
+<p class="back"><a href="https://stsforensics.github.io/VerZan/es/">Volver a VerZan Check</a>, la herramienta gratuita de huella de archivos de StS Forensics Ltd</p>
+<h1>La integridad no es la completitud</h1>
+<p>Integridad: nada en los registros que se me entregaron ha cambiado. Completitud: no falta nada de lo que debería estar, para el alcance que declaró el operador. Elija un escenario. Juguete didáctico, ni un producto, ni una prueba, ni un consejo. CC BY 4.0, StS Forensics Ltd, v3, 14 de noviembre de 2026, borrador para discusión.</p>
+
+<section class="pre" aria-labelledby="whatis">
+<h2 id="whatis">Qué es esto, según su función</h2>
+<p><b>Cualquier persona:</b> Un diario puede no tener ninguna página alterada y aun así carecer de la página que importa. Esta demostración muestra un registro que supera una comprobación de manipulación mientras faltan entradas, y qué pruebas adicionales lo detectan.</p>
+<p><b>Dirección y responsables de riesgos:</b> Un informe de integridad limpio dice que los registros que le entregaron no han cambiado. No dice nada sobre si están todos. Pregunte quién tiene un recuento independiente de las entradas y qué sistema externo (proveedor de pagos, auditoría de almacenamiento) puede conciliarse con el registro.</p>
+<p><b>Aseguradoras, reaseguradoras y normas de datos del seguro:</b> Piense en un listado de siniestros o un bordereau que cuadra perfectamente pero omite un siniestro. La coherencia interna es una comprobación de higiene. La cobertura exige un alcance declarado y una conciliación con un registro que quien lo prepara no controla.</p>
+<p><b>Ingenieros de IA y ML:</b> Cada entrada calcula el hash del hash anterior más su propio contenido. La comprobación de integridad (cada entrada coincide con su propia huella) detecta ediciones. La comprobación de huecos (números y enlaces sin interrupción) detecta una eliminación en medio. Cualquiera puede recalcular una cadena, de modo que una cola cortada o un registro reconstruido por completo sigue verificándose a menos que un tercero conserve un punto de control (número de entradas y hash de cabecera). Una acción de un agente que nunca escribió una línea de registro solo aparece frente a un sistema que el agente no controla.</p>
+<p><b>IETF y normalización:</b> El juguete no tiene firmas, ni árbol de Merkle, ni marcas de tiempo. El punto de control hace las veces de una cabecera de árbol firmada. Los registros reales añaden cabeceras firmadas y pruebas de consistencia para que un testigo pueda comprobar que un registro solo ha crecido (<a href="https://www.rfc-editor.org/rfc/rfc9162">RFC 9162</a>, Certificate Transparency 2.0). <a href="https://www.rfc-editor.org/rfc/rfc9943">RFC 9943</a> (SCITT) ofrece recibos que muestran que una declaración fue registrada. Si se presentaron todas las acciones pertinentes es una cuestión de alcance que cada implantación sigue debiendo resolver. Las <a href="https://doi.org/10.5281/zenodo.23857888">O4M Record Tests</a> en borrador (C1 a C23, comentarios abiertos hasta el 1 de diciembre de 2026) se centran en esa cuestión de omisión y están pensadas para convivir con formatos como SCITT.</p>
+<p class="mut">Dónde encaja: <a href="https://stsforensics.github.io/VerZan/es/">VerZan Check</a> pregunta «¿es este exactamente el archivo que alguien registró?». Esta página plantea la siguiente pregunta: ¿falta algo en el registro?</p>
+</section>
+
+<section class="leg" aria-labelledby="legend">
+<h2 id="legend">Cómo leer los resultados</h2>
+<p>Integridad: ¿sigue cada entrada exactamente como se obtuvo su huella?</p>
+<p>Completitud, tres pruebas en orden: (a) ningún hueco dentro del registro, (b) el registro coincide con un punto de control de un testigo (número de entradas y hash de cabecera), (c) el registro coincide con los registros que tienen terceros.</p>
+<p>La integridad muestra PASS o FAIL. La completitud muestra FAIL, HOLD (las pruebas aportadas no permiten decidir) o NO SE ENCONTRÓ NINGÚN HUECO. Es lo mejor que puede decir y nunca prueba que no falte nada.</p>
+</section>
+
+<h2>Pruébelo</h2>
+<label>Escenario <select id="sc"></select></label>
+<div id="out" aria-live="polite"></div>
+
+<section aria-labelledby="lim">
+<h2 id="lim">Límites de este juguete</h2>
+<p class="mut">Un solo escritor, un solo testigo, sin firmas. Se supone que el testigo es honrado e independiente del operador; si el operador controla el punto de control, también puede reescribirlo. La completitud siempre es relativa a un alcance que declaró el operador. NO SE ENCONTRÓ NINGÚN HUECO significa que las tres pruebas coinciden. No significa que no falte nada. Los registros externos se cotejan por texto exacto, y solo para las acciones que esa parte externa puede ver.</p>
+</section>
+<p><small><a href="https://stsforensics.github.io/VerZan/es/">Volver a VerZan Check</a>. Todo funciona por completo en su navegador y nada sale de esta página. Licencia CC BY 4.0, StS Forensics Ltd. Juguete didáctico, borrador para discusión.</small></p>
+<noscript><p>Esta demostración necesita JavaScript para calcular las huellas en su navegador. Nada sale de la página.</p></noscript>
+
+<script>
+const T={"errCrypto": "Esta demostración necesita una página segura (https) con Web Crypto. Ábrala por https en un navegador actual.", "errStart": "Lo sentimos, la demostración no pudo iniciarse: ", "intLabel": "Integridad", "compLabel": "Completitud", "nogap": "NO SE ENCONTRÓ NINGÚN HUECO", "colon": ": ", "stop": ".", "tSeq": "n.º", "tAction": "acción", "tHash": "hash (primeros 12)", "tCaption": "Registro tal como se presenta al verificador", "witLabel": "Testigo (no el operador)", "witFmt": "recuento {count}, cabecera {head}", "none": "ninguno", "outLabel": "Registros externos", "sep": "; ", "intPass": "cada entrada sigue coincidiendo con su propia huella (un registro reconstruido también supera esto)", "intFail": "la entrada {n} fue alterada", "seqFail": "la numeración salta en la posición {pos} (se encontró {found}): falta una entrada", "chainFail": "la entrada {seq} no apunta a la anterior", "noWitness": "sin punto de control de testigo: no se puede saber si se cortó la cola o se reconstruyó la cadena", "shortLog": "el registro tiene {len} entradas, el testigo vio {count}", "witnessDiff": "el historial hasta la entrada {count} difiere del punto de control del testigo (reescrito o cadena reconstruida)", "noOutside": "sin registros externos: no se puede conciliar", "outMissing": "la parte externa registró {list} pero el registro no tiene una entrada que coincida", "ok": "ningún hueco dentro del registro, y coincidencia con el punto de control del testigo y con los registros externos. Lo que ninguno de ellos vio seguiría siendo invisible", "src1": "proveedor de pagos y pasarela de correo", "src2": "proveedor de pagos, pasarela de correo y auditoría de almacenamiento", "scen": [{"n": "1 Registro limpio", "s": "No se ha tocado nada. Un testigo conserva el recuento y el hash de cabecera, y el proveedor de pagos y la pasarela de correo tienen sus propios registros."}, {"n": "2 Una entrada alterada", "s": "Alguien cambia el reembolso de 120.00 a 12.00 pero deja la huella antigua. La comprobación de integridad lo detecta. El registro del proveedor de pagos también discrepa."}, {"n": "2b Entrada alterada, cadena reconstruida, sin testigo", "s": "La misma edición, pero se recalculan todas las huellas. La integridad se supera y no existe nada independiente que discrepe."}, {"n": "2c Entrada alterada, cadena reconstruida, el testigo conservó el punto de control", "s": "El mismo registro reconstruido, pero un tercero conservó el hash de cabecera. La cadena reconstruida no puede coincidir con él."}, {"n": "3 Entrada intermedia eliminada", "s": "Se quita la entrada del correo. Todas las entradas restantes están sin cambios, así que la integridad se supera, pero la numeración tiene un hueco."}, {"n": "3b Entrada intermedia eliminada, cadena reconstruida, el testigo conservó el recuento", "s": "La eliminación se oculta renumerando y recalculando los hashes. Las dos comprobaciones internas se superan. El recuento del testigo la delata."}, {"n": "4 Cola cortada, sin testigo", "s": "Se eliminan las dos últimas entradas. Lo que queda es una cadena válida, así que las dos comprobaciones internas se superan. Sin testigo, el hueco no se ve."}, {"n": "4b Cola cortada, el testigo conservó el recuento", "s": "El mismo corte. El testigo vio seis entradas y ahora ve cuatro."}, {"n": "5 Acción nunca registrada, sin comprobación externa", "s": "El borrado del archivo nunca se escribió en el registro. Todo lo que hay está intacto."}, {"n": "5b Acción nunca registrada, solo testigo", "s": "El testigo coincide con el registro porque solo cuenta lo que el registro contiene. La acción no registrada sigue siendo invisible."}, {"n": "5c Acción nunca registrada, un registro externo la tiene", "s": "Una auditoría de almacenamiento registró el borrado. Conciliar el registro con ella deja al descubierto la omisión."}, {"n": "6 El registro creció después del punto de control (normal)", "s": "Se añadió una entrada nueva después del punto de control del testigo. Las seis primeras entradas siguen coincidiendo, así que el crecimiento se acepta."}]};
+const f=(s,o)=>s.replace(/\{(\w+)\}/g,(m,k)=>o[k]);
+const enc=new TextEncoder();
+async function H(s){const b=await crypto.subtle.digest("SHA-256",enc.encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
+const Z="0".repeat(64);
+const TRUTH=["open_ticket 41","read_customer 17","send_refund 120.00","email_customer 17","delete_file tmp.csv","close_ticket 41"];
+const OUT=["send_refund 120.00","email_customer 17"];
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+async function build(b){const log=[];let p=Z;for(let i=0;i<b.length;i++){const h=await H(`${p}|${i+1}|${b[i]}`);log.push({seq:i+1,body:b[i],prev:p,hash:h});p=h}return log}
+async function integrity(log){for(const e of log){if(await H(`${e.prev}|${e.seq}|${e.body}`)!==e.hash)return["FAIL",f(T.intFail,{n:e.seq})]}return["PASS",T.intPass]}
+function cp(l){return{count:l.length,head:l.length?l[l.length-1].hash:Z}}
+function completeness(log,w,o){let ok=true;const n=[];let p=Z;
+ for(let i=0;i<log.length;i++){const e=log[i];
+  if(e.seq!==i+1)return["FAIL",f(T.seqFail,{pos:i+1,found:e.seq})];
+  if(e.prev!==p)return["FAIL",f(T.chainFail,{seq:e.seq})];
+  p=e.hash}
+ if(!w){n.push(T.noWitness);ok=null}
+ else{
+  if(log.length<w.count)return["FAIL",f(T.shortLog,{len:log.length,count:w.count})];
+  const at=w.count===0?Z:log[w.count-1].hash;
+  if(at!==w.head)return["FAIL",f(T.witnessDiff,{count:w.count})]}
+ if(!o){n.push(T.noOutside);if(ok===true)ok=null}
+ else{const bs=log.map(e=>e.body),m=o.filter(r=>!bs.includes(r));if(m.length)return["FAIL",f(T.outMissing,{list:m.join(", ")})]}
+ return[ok===true?"PASS":"HOLD",n.length?n.join(T.sep):T.ok]}
+async function scenarios(){
+ const clean=await build(TRUTH),w=cp(clean),S=[];
+ const clone=x=>JSON.parse(JSON.stringify(x));
+ let k=0;
+ const add=(log,wit,out,src)=>{const t=T.scen[k++];S.push({name:t.n,story:t.s,log,w:wit,o:out,src})};
+ add(clean,w,OUT,T.src1);
+ const alt=clone(clean);alt[2].body="send_refund 12.00";
+ add(alt,w,OUT,T.src1);
+ const altR=await build(TRUTH.map(x=>x==="send_refund 120.00"?"send_refund 12.00":x));
+ add(altR,null,null,"");
+ add(altR,w,OUT,T.src1);
+ const del=clone(clean);del.splice(3,1);
+ add(del,w,OUT,T.src1);
+ const delR=await build(TRUTH.filter(x=>x!=="email_customer 17"));
+ add(delR,w,OUT,T.src1);
+ const tr=clean.slice(0,4);
+ add(tr,null,null,"");
+ add(tr,w,OUT,T.src1);
+ const om=await build(TRUTH.filter(x=>x!=="delete_file tmp.csv"));
+ add(om,null,null,"");
+ add(om,cp(om),null,"");
+ add(om,cp(om),[...OUT,"delete_file tmp.csv"],T.src2);
+ const grown=await build([...TRUTH,"open_ticket 42"]);
+ add(grown,w,OUT,T.src1);
+ return S}
+function view(s,i,c){
+ const label=c[0]==="PASS"?T.nogap:c[0];
+ return `<div class="card"><div class="story">${esc(s.story)}</div>
+  <div>${esc(T.intLabel)}${T.colon}<span class="${i[0]}">${i[0]}</span> <small>${esc(i[1])}</small></div>
+  <div>${esc(T.compLabel)}${T.colon}<span class="${c[0]}">${esc(label)}</span> <small>${esc(c[1])}</small></div></div>
+  <table><caption>${esc(T.tCaption)}</caption><tr><th>${esc(T.tSeq)}</th><th>${esc(T.tAction)}</th><th>${esc(T.tHash)}</th></tr>${s.log.map(e=>`<tr><td>${esc(e.seq)}</td><td>${esc(e.body)}</td><td>${esc(e.hash.slice(0,12))}</td></tr>`).join("")}</table>
+  <small>${esc(T.witLabel)}${T.colon}${s.w?esc(f(T.witFmt,{count:s.w.count,head:s.w.head.slice(0,12)})):esc(T.none)}${T.stop} ${esc(T.outLabel)}${s.src?` (${esc(s.src)})`:""}${T.colon}${s.o?esc(s.o.join("; ")):esc(T.none)}${T.stop}</small>`}
+if(typeof document!=="undefined")(async()=>{
+ const out=document.getElementById("out");
+ if(!(window.crypto&&crypto.subtle)){out.textContent=T.errCrypto;return}
+ try{
+  const S=await scenarios(),sel=document.getElementById("sc");
+  S.forEach((s,i)=>{const o=document.createElement("option");o.value=i;o.textContent=s.name;sel.appendChild(o)});
+  async function show(){const s=S[sel.value],i=await integrity(s.log),c=completeness(s.log,s.w,s.o);out.innerHTML=view(s,i,c)}
+  sel.onchange=show;await show()
+ }catch(e){out.textContent=T.errStart+e.message}
+})();
+</script></body></html>
