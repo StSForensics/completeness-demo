@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Integrity is not completeness: a log demo</title>
+<style>
+:root{--bg:#fff;--fg:#1a1a1a;--mut:#666;--ok:#146c2e;--bad:#b3261e;--unk:#8a5a00;--card:#f5f5f5}
+@media(prefers-color-scheme:dark){:root{--bg:#121212;--fg:#eee;--mut:#aaa;--ok:#6fd08c;--bad:#ff8a80;--unk:#f2c46d;--card:#1e1e1e}}
+body{font:16px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--fg);max-width:760px;margin:0 auto;padding:16px}
+h1{font-size:1.3rem}select,button{font:inherit;padding:6px 10px;margin:4px 0}
+table{border-collapse:collapse;width:100%;margin:8px 0}td,th{border-bottom:1px solid #8884;padding:4px 6px;text-align:left;font-size:.85rem;word-break:break-all}
+.card{background:var(--card);padding:10px 12px;border-radius:8px;margin:10px 0}
+.PASS{color:var(--ok);font-weight:700}.FAIL{color:var(--bad);font-weight:700}.UNKNOWN{color:var(--unk);font-weight:700}
+small{color:var(--mut)}
+</style></head><body>
+<h1>Integrity is not completeness</h1>
+<p>Integrity: nothing in the records I was given has been changed. Completeness: nothing that should be there is missing. Pick a scenario. Teaching toy, not a product or evidence. CC BY 4.0, StS Forensics Ltd, draft for discussion.</p>
+<label>Scenario <select id="sc"></select></label>
+<div id="out"></div>
+<script>
+const enc=new TextEncoder();
+async function H(s){const b=await crypto.subtle.digest("SHA-256",enc.encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
+const Z="0".repeat(64);
+const TRUTH=["open_ticket 41","read_customer 17","send_refund 120.00","email_customer 17","delete_file tmp.csv","close_ticket 41"];
+const OUT=["send_refund 120.00","email_customer 17"];
+async function build(b){const log=[];let p=Z;for(let i=0;i<b.length;i++){const h=await H(`${p}|${i+1}|${b[i]}`);log.push({seq:i+1,body:b[i],prev:p,hash:h});p=h}return log}
+async function integrity(log){let p=Z;for(let i=0;i<log.length;i++){const e=log[i];if(e.seq!==i+1)return["FAIL",`sequence jumps at position ${i+1} (found ${e.seq})`];if(e.prev!==p)return["FAIL",`chain broken at seq ${e.seq}`];if(await H(`${e.prev}|${e.seq}|${e.body}`)!==e.hash)return["FAIL",`entry ${e.seq} was altered`];p=e.hash}return["PASS","chain and numbering consistent"]}
+function cp(l){return{count:l.length,head:l.length?l[l.length-1].hash:Z}}
+function completeness(log,w,o){let ok=true,n=[];
+ if(!w){n.push("no witness checkpoint: cannot say if the tail was cut or the chain rebuilt");ok=null}
+ else{if(log.length<w.count)return["FAIL",`log has ${log.length} entries, witness saw ${w.count}`];
+  if(log.length===w.count&&(!log.length||log[log.length-1].hash!==w.head))return["FAIL","head hash differs from the witness checkpoint (chain rebuilt)"]}
+ if(!o){n.push("no outside records: cannot reconcile");if(ok===true)ok=null}
+ else{const bs=log.map(e=>e.body),m=o.filter(r=>!bs.includes(r));if(m.length)return["FAIL",`outside party recorded ${m.join(", ")} but the log does not`]}
+ return[ok===true?"PASS":ok===null?"UNKNOWN":"FAIL",n.length?n.join("; "):"matches witness and outside records for the declared scope"]}
+async function scenarios(){
+ const clean=await build(TRUTH),w=cp(clean),S=[];
+ S.push(["1 Clean log",clean,w,OUT]);
+ const alt=JSON.parse(JSON.stringify(clean));alt[2].body="send_refund 12.00";S.push(["2 One entry altered",alt,w,OUT]);
+ const del=JSON.parse(JSON.stringify(clean));del.splice(3,1);S.push(["3 Middle entry deleted",del,w,OUT]);
+ const tr=clean.slice(0,4);S.push(["4 Tail cut off, no witness",tr,null,null]);S.push(["4b Tail cut off, witness kept count",tr,w,OUT]);
+ const om=await build(TRUTH.filter(x=>x!=="delete_file tmp.csv"));
+ S.push(["5 Action never logged, no outside check",om,null,null]);
+ S.push(["5b Action never logged, witness only",om,cp(om),null]);
+ S.push(["5c Action never logged, outside record has it",om,cp(om),[...OUT,"delete_file tmp.csv"]]);
+ return S}
+(async()=>{const S=await scenarios(),sel=document.getElementById("sc"),out=document.getElementById("out");
+ S.forEach((s,i)=>{const o=document.createElement("option");o.value=i;o.textContent=s[0];sel.appendChild(o)});
+ async function show(){const[n,log,w,o]=S[sel.value],i=await integrity(log),c=completeness(log,w,o);
+  out.innerHTML=`<div class="card"><div>Integrity: <span class="${i[0]}">${i[0]}</span> <small>${i[1]}</small></div><div>Completeness: <span class="${c[0]}">${c[0]}</span> <small>${c[1]}</small></div></div>
+  <table><tr><th>seq</th><th>action</th><th>hash (first 12)</th></tr>${log.map(e=>`<tr><td>${e.seq}</td><td>${e.body}</td><td>${e.hash.slice(0,12)}</td></tr>`).join("")}</table>
+  <small>Witness (not the operator): ${w?`count ${w.count}, head ${w.head.slice(0,12)}`:"none"}. Outside records (e.g. payment provider): ${o?o.join("; "):"none"}.</small>`}
+ sel.onchange=show;show()})();
+</script></body></html>
