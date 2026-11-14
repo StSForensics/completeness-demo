@@ -27,13 +27,14 @@ small,.mut{color:var(--mut)}
 .back{font-size:.9rem;margin:0 0 6px}.bar,.note{font-size:.85rem;margin:0 0 6px}
 .pre p,.leg p{margin:6px 0}.pre b{white-space:nowrap}
 .story{margin:6px 0 2px}
-</style></head><body>
+.fig{margin:14px 0}.fig img{max-width:100%;height:auto;border-radius:10px}</style></head><body>
 <p class="bar"><a href="https://stsforensics.github.io/completeness-demo/fr/" hreflang="fr" lang="fr">Français</a> · <a href="https://stsforensics.github.io/completeness-demo/de/" hreflang="de" lang="de">Deutsch</a> · <a href="https://stsforensics.github.io/completeness-demo/es/" hreflang="es" lang="es">Español</a> · <a href="https://stsforensics.github.io/completeness-demo/ja/" hreflang="ja" lang="ja">日本語</a> · <a href="https://stsforensics.github.io/completeness-demo/zh-hk/" hreflang="zh-HK" lang="zh-HK">繁體中文（香港）</a> · <a href="https://stsforensics.github.io/completeness-demo/zh-tw/" hreflang="zh-TW" lang="zh-TW">繁體中文（台灣）</a> · <a href="https://stsforensics.github.io/completeness-demo/zh-cn/" hreflang="zh-CN" lang="zh-CN">简体中文</a></p>
 <p class="note">These are machine translations not yet checked by native speakers; this English page prevails.</p>
 <p class="back"><a href="https://stsforensics.github.io/VerZan/">Back to VerZan Check</a>, the free file-fingerprint tool from StS Forensics Ltd</p>
 <h1>Integrity is not completeness</h1>
 <p>Integrity: nothing in the records I was given has been changed. Completeness: nothing that should be there is missing, for the scope the operator declared. Pick a scenario. Teaching toy, not a product, not evidence, not advice. CC BY 4.0, StS Forensics Ltd, v3, 14 November 2026, draft for discussion.</p>
 
+<figure class="fig"><img src="https://stsforensics.github.io/completeness-demo/img/infographic.jpg" width="1536" height="1024" loading="lazy" alt="Integrity is not completeness. A log can pass a tamper check while still missing entries. Integrity: Nothing that is there has been changed. Completeness: Something that should be there is missing, for the declared scope."></figure>
 <section class="pre" aria-labelledby="whatis">
 <h2 id="whatis">What this is, for your role</h2>
 <p><b>Anyone:</b> A diary can have no page altered and still be missing the page that matters. This demo shows a log that passes a tamper check while entries are missing, and what extra evidence catches it.</p>
@@ -60,6 +61,7 @@ small,.mut{color:var(--mut)}
 <p class="mut">One writer, one witness, no signatures. The witness is assumed honest and independent of the operator; if the operator controls the checkpoint they can rewrite it as well. Completeness is always relative to a scope the operator declared. NO GAP FOUND means the three tests agreed. It does not mean nothing is missing. Outside records are matched by exact text, and only for the actions that outside party can see.</p>
 </section>
 <p><small><a href="https://stsforensics.github.io/VerZan/">Back to VerZan Check</a>. Everything runs in your browser and nothing leaves this page. Licence CC BY 4.0, StS Forensics Ltd. Teaching toy, draft for discussion.</small></p>
+<p><small><a href="https://github.com/StSForensics/completeness-demo/issues/new/choose">Give feedback (one minute)</a></small></p>
 <noscript><p>This demo needs JavaScript to compute the fingerprints in your browser. Nothing leaves the page.</p></noscript>
 
 <script>

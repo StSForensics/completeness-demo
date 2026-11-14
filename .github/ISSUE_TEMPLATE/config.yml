@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Email instead
+    url: mailto:comments@sts-forensics.com?subject=Completeness%20demo
+    about: Email comments@sts-forensics.com with the subject "Completeness demo". We copy email comments to the public log only with your permission.

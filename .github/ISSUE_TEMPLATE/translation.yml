@@ -1,0 +1,35 @@
+name: Translation mistake
+description: Report a wrong or unnatural sentence on a translated page.
+title: "Translation: "
+labels: ["translation"]
+body:
+  - type: dropdown
+    id: language
+    attributes:
+      label: Which page?
+      options: ["Francais (fr)", "Deutsch (de)", "Espanol (es)", "Japanese (ja)", "Chinese Hong Kong (zh-hk)", "Chinese Taiwan (zh-tw)", "Chinese mainland (zh-cn)"]
+    validations:
+      required: true
+  - type: textarea
+    id: sentence
+    attributes:
+      label: The sentence as it is on the page
+    validations:
+      required: true
+  - type: textarea
+    id: better
+    attributes:
+      label: A better sentence
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why is the current one wrong? (optional)
+  - type: dropdown
+    id: credit
+    attributes:
+      label: How may we credit you?
+      options: ["By name", "By organisation", "By name and organisation", "Do not credit me"]
+    validations:
+      required: true

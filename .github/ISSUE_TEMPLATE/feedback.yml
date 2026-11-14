@@ -1,0 +1,47 @@
+name: Feedback on the demo (one minute)
+description: Tell us what you tried and what you thought. Skip anything you cannot answer.
+title: "Feedback: "
+labels: ["feedback"]
+body:
+  - type: dropdown
+    id: scenario
+    attributes:
+      label: Which scenario?
+      options: ["The whole page", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"]
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to see?
+  - type: textarea
+    id: saw
+    attributes:
+      label: What did you see?
+    validations:
+      required: true
+  - type: dropdown
+    id: clear
+    attributes:
+      label: Was the wording clear?
+      options: ["Yes", "Partly", "No"]
+    validations:
+      required: true
+  - type: textarea
+    id: wording
+    attributes:
+      label: What wording would you use instead? (optional)
+  - type: dropdown
+    id: credit
+    attributes:
+      label: How may we credit you?
+      options: ["By name", "By organisation", "By name and organisation", "Do not credit me"]
+    validations:
+      required: true
+  - type: checkboxes
+    id: licence
+    attributes:
+      label: Licence
+      options:
+        - label: I agree that any wording I suggest may be used under CC BY 4.0.
+          required: true
